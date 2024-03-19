@@ -1,0 +1,112 @@
+# Copyright 2024 Canonical Ltd.
+# See LICENSE file for licensing details.
+---
+
+name: charmed-trino-rock
+base: ubuntu@22.04
+version: 418-22.04-edge
+summary: Charmed TrinoROCK OCI
+description: |
+  Trino is an ANSI SQL compliant query engine,
+  that works with BI tools such as R, Tableau,
+  Power BI, Superset and many others.
+license: Apache-2.0
+
+platforms:
+  amd64:
+
+# Please refer to
+# https://discourse.ubuntu.com/t/unifying-user-identity-across-snaps-and-rocks/36469
+# for more information about shared user.
+run_user: _daemon_
+
+services:
+  trino-server:
+    override: replace
+    summary: Trino coordinator service
+    startup: disabled
+    command: ./entrypoint.sh
+
+environment:
+  JAVA_HOME: /usr/lib/jvm/java-21-openjdk-amd64/bin
+
+parts:
+  trino:
+    plugin: dump
+    source: https://repo.maven.apache.org/maven2/io/trino/trino-server/418/trino-server-418.tar.gz # yamllint disable-line
+    source-type: tar
+    source-checksum: sha1/8d1e05127efa2d8a14a184c6b163242d07bd8ee3
+    build-packages:
+      - build-essential
+    override-build: |
+      craftctl default
+      mkdir -p \
+        ${CRAFT_PART_INSTALL}/data/trino/var/run \
+        ${CRAFT_PART_INSTALL}/data/trino/var/log
+    organize:
+      bin: trino/bin
+      lib: trino/lib
+      plugin: trino/plugin
+    stage:
+      - data/trino
+      - trino/bin
+      - trino/lib
+      - trino/plugin
+    permissions:
+      - path: data/trino/var/run
+        owner: 584792
+        group: 584792
+        mode: "755"
+      - path: data/trino/var/log
+        owner: 584792
+        group: 584792
+        mode: "755"
+      - path: data/trino
+        owner: 584792
+        group: 584792
+        mode: "755"
+      - path: trino/bin
+        owner: 584792
+        group: 584792
+        mode: "755"
+      - path: trino/lib
+        owner: 584792
+        group: 584792
+        mode: "755"
+      - path: trino/plugin
+        owner: 584792
+        group: 584792
+        mode: "755"
+
+  local-files:
+    after: [trino]
+    plugin: dump
+    source: ./local-files
+    organize:
+      jvm.config: trino/etc/jvm.config
+      node.properties: trino/etc/node.properties
+      config.properties: trino/etc/config.properties
+      trino-entrypoint.sh: entrypoint.sh
+    stage:
+      - trino/etc/jvm.config
+      - trino/etc/node.properties
+      - trino/etc/config.properties
+      - entrypoint.sh
+    permissions:
+      - path: trino/etc
+        owner: 584792
+        group: 584792
+        mode: "755"
+      - path: entrypoint.sh
+        owner: 584792
+        group: 584792
+        mode: "755"
+
+  package-management:
+    plugin: nil
+    after: [trino, local-files]
+    overlay-packages:
+      - ca-certificates
+      - python-is-python3
+    stage-packages:
+      - openjdk-21-jdk-headless
