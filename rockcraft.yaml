@@ -102,9 +102,39 @@ parts:
         group: 584792
         mode: "755"
 
+  ranger-plugin:
+    after: [trino, local-files]
+    plugin: maven
+    maven-parameters: ["-DskipTests=true", "-P ranger-trino-plugin,-linux -am", "-pl distro,plugin-trino,ranger-trino-plugin-shim,agents-installer,credentialbuilder"] # yamllint disable-line
+    source: "https://downloads.apache.org/ranger/2.4.0/apache-ranger-2.4.0.tar.gz" # yamllint disable-line
+    source-type: "tar"
+    source-checksum: "sha512/5bc934416e7239e2b74843399389a69e8c129322ff0a67b2e7a541a4dd2171357b10925ea29861c40e7590a6523494d46343fdda38049d9a66e48d80eed11a4b" # yamllint disable-l
+    build-packages:
+      - build-essential
+      - maven
+      - openjdk-11-jdk-headless
+    build-environment:
+      - JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
+    override-build: |
+      craftctl default
+      mkdir -p ${CRAFT_PART_INSTALL}/etc
+
+      # Unpack trino plugin file
+      tar xvfz target/ranger-2.4.0-trino-plugin.tar.gz \
+        --directory=${CRAFT_PART_INSTALL}/etc
+    organize:
+      etc/ranger-2.4.0-trino-plugin: trino/etc/ranger
+    stage:
+      - trino/etc/ranger
+    permissions:
+      - path: trino/etc/ranger
+        owner: 584792
+        group: 584792
+        mode: "755"
+
   package-management:
     plugin: nil
-    after: [trino, local-files]
+    after: [trino, local-files, ranger-plugin]
     overlay-packages:
       - ca-certificates
       - python-is-python3
