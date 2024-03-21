@@ -1,0 +1,147 @@
+# Copyright 2024 Canonical Ltd.
+# See LICENSE file for licensing details.
+---
+
+name: charmed-trino-rock
+base: ubuntu@22.04
+version: 418-22.04-edge
+summary: Charmed TrinoROCK OCI
+description: |
+  Trino is an ANSI SQL compliant query engine,
+  that works with BI tools such as R, Tableau,
+  Power BI, Superset and many others.
+license: Apache-2.0
+
+platforms:
+  amd64:
+
+# Please refer to
+# https://discourse.ubuntu.com/t/unifying-user-identity-across-snaps-and-rocks/36469
+# for more information about shared user.
+run_user: _daemon_
+
+services:
+  trino-server:
+    override: replace
+    summary: Trino coordinator service
+    startup: disabled
+    command: ./entrypoint.sh
+
+environment:
+  JAVA_HOME: /usr/lib/jvm/java-21-openjdk-amd64
+
+parts:
+  trino:
+    plugin: dump
+    source: https://repo.maven.apache.org/maven2/io/trino/trino-server/418/trino-server-418.tar.gz # yamllint disable-line
+    source-type: tar
+    source-checksum: sha1/8d1e05127efa2d8a14a184c6b163242d07bd8ee3
+    build-packages:
+      - build-essential
+    override-build: |
+      craftctl default
+      mkdir -p \
+        ${CRAFT_PART_INSTALL}/data/trino/var/run \
+        ${CRAFT_PART_INSTALL}/data/trino/var/log \
+        ${CRAFT_PART_INSTALL}/usr/lib/trino/var
+    organize:
+      bin: usr/lib/trino/bin
+      lib: usr/lib/trino/lib
+      plugin: usr/lib/trino/plugin
+    stage:
+      - data/trino
+      - usr/lib/trino/bin
+      - usr/lib/trino/lib
+      - usr/lib/trino/plugin
+      - usr/lib/trino/var
+    permissions:
+      - path: data/trino/var/run
+        owner: 584792
+        group: 584792
+        mode: "755"
+      - path: data/trino/var/log
+        owner: 584792
+        group: 584792
+        mode: "755"
+      - path: data/trino
+        owner: 584792
+        group: 584792
+        mode: "755"
+      - path: usr/lib/trino/bin
+        owner: 584792
+        group: 584792
+        mode: "755"
+      - path: usr/lib/trino/lib
+        owner: 584792
+        group: 584792
+        mode: "755"
+      - path: usr/lib/trino/plugin
+        owner: 584792
+        group: 584792
+        mode: "755"
+      - path: usr/lib/trino/var
+        owner: 584792
+        group: 584792
+        mode: "755"
+
+  local-files:
+    after: [trino]
+    plugin: dump
+    source: ./local-files
+    organize:
+      jvm.config: usr/lib/trino/etc/jvm.config
+      node.properties: usr/lib/trino/etc/node.properties
+      config.properties: usr/lib/trino/etc/config.properties
+      trino-entrypoint.sh: entrypoint.sh
+    stage:
+      - usr/lib/trino/etc/jvm.config
+      - usr/lib/trino/etc/node.properties
+      - usr/lib/trino/etc/config.properties
+      - entrypoint.sh
+    permissions:
+      - path: usr/lib/trino/etc
+        owner: 584792
+        group: 584792
+        mode: "755"
+      - path: entrypoint.sh
+        owner: 584792
+        group: 584792
+        mode: "755"
+
+  ranger-plugin:
+    after: [trino, local-files]
+    plugin: maven
+    maven-parameters: ["-DskipTests=true", "-P ranger-trino-plugin,-linux -am", "-pl distro,plugin-trino,ranger-trino-plugin-shim,agents-installer,credentialbuilder"] # yamllint disable-line
+    source: "https://downloads.apache.org/ranger/2.4.0/apache-ranger-2.4.0.tar.gz" # yamllint disable-line
+    source-type: "tar"
+    source-checksum: "sha512/5bc934416e7239e2b74843399389a69e8c129322ff0a67b2e7a541a4dd2171357b10925ea29861c40e7590a6523494d46343fdda38049d9a66e48d80eed11a4b" # yamllint disable-line
+    build-packages:
+      - build-essential
+      - maven
+      - openjdk-11-jdk-headless
+    build-environment:
+      - JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
+    override-build: |
+      craftctl default
+      mkdir -p ${CRAFT_PART_INSTALL}/usr/lib/ranger
+
+      # Unpack trino plugin file
+      tar xvfz target/ranger-2.4.0-trino-plugin.tar.gz \
+        --directory=${CRAFT_PART_INSTALL}/usr/lib/ranger/ \
+        --strip-components=1
+    stage:
+      - usr/lib/ranger
+    permissions:
+      - path: usr/lib/ranger
+        owner: 584792
+        group: 584792
+        mode: "755"
+
+  package-management:
+    plugin: nil
+    after: [trino, local-files, ranger-plugin]
+    overlay-packages:
+      - ca-certificates
+      - python-is-python3
+    stage-packages:
+      - openjdk-21-jdk-headless
