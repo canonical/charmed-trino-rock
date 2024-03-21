@@ -1,4 +1,4 @@
 #!/bin/bash
 
-export PATH=$JAVA_HOME:$PATH
-trino/bin/launcher run
+export PATH="${JAVA_HOME}/bin:${PATH}"
+usr/lib/trino/bin/launcher run

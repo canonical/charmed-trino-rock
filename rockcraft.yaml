@@ -28,7 +28,7 @@ services:
     command: ./entrypoint.sh
 
 environment:
-  JAVA_HOME: /usr/lib/jvm/java-21-openjdk-amd64/bin
+  JAVA_HOME: /usr/lib/jvm/java-21-openjdk-amd64
 
 parts:
   trino:
@@ -42,16 +42,18 @@ parts:
       craftctl default
       mkdir -p \
         ${CRAFT_PART_INSTALL}/data/trino/var/run \
-        ${CRAFT_PART_INSTALL}/data/trino/var/log
+        ${CRAFT_PART_INSTALL}/data/trino/var/log \
+        ${CRAFT_PART_INSTALL}/usr/lib/trino/var
     organize:
-      bin: trino/bin
-      lib: trino/lib
-      plugin: trino/plugin
+      bin: usr/lib/trino/bin
+      lib: usr/lib/trino/lib
+      plugin: usr/lib/trino/plugin
     stage:
       - data/trino
-      - trino/bin
-      - trino/lib
-      - trino/plugin
+      - usr/lib/trino/bin
+      - usr/lib/trino/lib
+      - usr/lib/trino/plugin
+      - usr/lib/trino/var
     permissions:
       - path: data/trino/var/run
         owner: 584792
@@ -65,15 +67,19 @@ parts:
         owner: 584792
         group: 584792
         mode: "755"
-      - path: trino/bin
+      - path: usr/lib/trino/bin
         owner: 584792
         group: 584792
         mode: "755"
-      - path: trino/lib
+      - path: usr/lib/trino/lib
         owner: 584792
         group: 584792
         mode: "755"
-      - path: trino/plugin
+      - path: usr/lib/trino/plugin
+        owner: 584792
+        group: 584792
+        mode: "755"
+      - path: usr/lib/trino/var
         owner: 584792
         group: 584792
         mode: "755"
@@ -83,17 +89,17 @@ parts:
     plugin: dump
     source: ./local-files
     organize:
-      jvm.config: trino/etc/jvm.config
-      node.properties: trino/etc/node.properties
-      config.properties: trino/etc/config.properties
+      jvm.config: usr/lib/trino/etc/jvm.config
+      node.properties: usr/lib/trino/etc/node.properties
+      config.properties: usr/lib/trino/etc/config.properties
       trino-entrypoint.sh: entrypoint.sh
     stage:
-      - trino/etc/jvm.config
-      - trino/etc/node.properties
-      - trino/etc/config.properties
+      - usr/lib/trino/etc/jvm.config
+      - usr/lib/trino/etc/node.properties
+      - usr/lib/trino/etc/config.properties
       - entrypoint.sh
     permissions:
-      - path: trino/etc
+      - path: usr/lib/trino/etc
         owner: 584792
         group: 584792
         mode: "755"
@@ -117,17 +123,16 @@ parts:
       - JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
     override-build: |
       craftctl default
-      mkdir -p ${CRAFT_PART_INSTALL}/etc
+      mkdir -p ${CRAFT_PART_INSTALL}/usr/lib/ranger
 
       # Unpack trino plugin file
       tar xvfz target/ranger-2.4.0-trino-plugin.tar.gz \
-        --directory=${CRAFT_PART_INSTALL}/etc
-    organize:
-      etc/ranger-2.4.0-trino-plugin: trino/etc/ranger
+        --directory=${CRAFT_PART_INSTALL}/usr/lib/ranger/ \
+        --strip-components=1
     stage:
-      - trino/etc/ranger
+      - usr/lib/ranger
     permissions:
-      - path: trino/etc/ranger
+      - path: usr/lib/ranger
         owner: 584792
         group: 584792
         mode: "755"
