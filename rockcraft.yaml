@@ -47,7 +47,13 @@ parts:
     organize:
       bin: usr/lib/trino/bin
       lib: usr/lib/trino/lib
-      plugin: usr/lib/trino/plugin
+      plugin/elasticsearch: usr/lib/trino/plugin/elasticsearch
+      plugin/google-sheets: usr/lib/trino/plugin/google-sheets
+      plugin/mysql: usr/lib/trino/plugin/mysql
+      plugin/password-authenticators: usr/lib/trino/plugin/password-authenticators # yamllint disable-line
+      plugin/postgresql: usr/lib/trino/plugin/postgresql
+      plugin/prometheus: usr/lib/trino/plugin/prometheus
+      plugin/redis: usr/lib/trino/plugin/redis
     stage:
       - data/trino
       - usr/lib/trino/bin
