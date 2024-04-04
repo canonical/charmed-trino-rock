@@ -98,11 +98,13 @@ parts:
       jvm.config: usr/lib/trino/etc/jvm.config
       node.properties: usr/lib/trino/etc/node.properties
       config.properties: usr/lib/trino/etc/config.properties
+      # jmx-exporter-config.yaml: usr/lib/trino/etc/trino/jmx/config.yaml
       trino-entrypoint.sh: entrypoint.sh
     stage:
       - usr/lib/trino/etc/jvm.config
       - usr/lib/trino/etc/node.properties
       - usr/lib/trino/etc/config.properties
+      # - usr/lib/trino/etc/trino/jmx/config.yaml
       - entrypoint.sh
     permissions:
       - path: usr/lib/trino/etc
@@ -142,6 +144,17 @@ parts:
         owner: 584792
         group: 584792
         mode: "755"
+
+  jmx-exporter:
+    plugin: maven
+    maven-parameters: ["-DskipTests=true"]
+    source: https://github.com/prometheus/jmx_exporter.git
+    source-type: git
+    source-tag: parent-0.19.0
+    organize:
+      jar/jmx_prometheus_javaagent-0.19.0.jar: usr/lib/trino/lib/jmx_prometheus_javaagent.jar
+    stage:
+      - usr/lib/trino/lib/jmx_prometheus_javaagent.jar
 
   package-management:
     plugin: nil
