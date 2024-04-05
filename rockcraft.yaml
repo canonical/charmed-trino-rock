@@ -98,13 +98,11 @@ parts:
       jvm.config: usr/lib/trino/etc/jvm.config
       node.properties: usr/lib/trino/etc/node.properties
       config.properties: usr/lib/trino/etc/config.properties
-      # jmx-exporter-config.yaml: usr/lib/trino/etc/trino/jmx/config.yaml
       trino-entrypoint.sh: entrypoint.sh
     stage:
       - usr/lib/trino/etc/jvm.config
       - usr/lib/trino/etc/node.properties
       - usr/lib/trino/etc/config.properties
-      # - usr/lib/trino/etc/trino/jmx/config.yaml
       - entrypoint.sh
     permissions:
       - path: usr/lib/trino/etc
