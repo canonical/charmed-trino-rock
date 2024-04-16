@@ -106,12 +106,17 @@ parts:
       - usr/lib/trino/etc/config.properties
       - usr/lib/trino/etc/trino/jmx/config.yaml
       - entrypoint.sh
+      - trino-cli.sh
     permissions:
       - path: usr/lib/trino/etc
         owner: 584792
         group: 584792
         mode: "755"
       - path: entrypoint.sh
+        owner: 584792
+        group: 584792
+        mode: "755"
+      - path: trino-cli.sh
         owner: 584792
         group: 584792
         mode: "755"
@@ -171,6 +176,21 @@ parts:
         group: 584792
         mode: "755"
 
+  trino-cli:
+    plugin: dump
+    source: https://repo.maven.apache.org/maven2/io/trino/trino-cli/418/trino-cli-418-executable.jar # yamllint disable-line
+    source-checksum: sha1/6cc447532d8722f78529257c13f8ab51e7481b15
+    source-type: file
+    organize:
+      trino-cli-418-executable.jar: trino
+    stage:
+      - trino
+    permissions:
+      - path: trino
+        owner: 584792
+        group: 584792
+        mode: "755"
+
   package-management:
     plugin: nil
     after: [trino, local-files, ranger-plugin]
@@ -179,3 +199,4 @@ parts:
       - python-is-python3
     stage-packages:
       - openjdk-21-jdk-headless
+      - less
