@@ -91,7 +91,7 @@ parts:
         mode: "755"
 
   local-files:
-    after: [trino]
+    after: [trino, ranger-plugin]
     plugin: dump
     source: ./local-files
     organize:
@@ -100,7 +100,9 @@ parts:
       config.properties: usr/lib/trino/etc/config.properties
       jmx-config.yaml: usr/lib/trino/etc/trino/jmx/config.yaml
       trino-entrypoint.sh: entrypoint.sh
+      ranger-trino-security.xml: usr/lib/ranger/install/conf.templates/enable/ranger-trino-security.xml # yamllint disable-line
     stage:
+      - usr/lib/ranger/install/conf.templates/enable/ranger-trino-security.xml
       - usr/lib/trino/etc/jvm.config
       - usr/lib/trino/etc/node.properties
       - usr/lib/trino/etc/config.properties
@@ -122,12 +124,15 @@ parts:
         mode: "755"
 
   ranger-plugin:
-    after: [trino, local-files]
+    after: [trino]
     plugin: maven
     maven-parameters: ["-DskipTests=true", "-P ranger-trino-plugin,-linux -am", "-pl distro,plugin-trino,ranger-trino-plugin-shim,agents-installer,credentialbuilder"] # yamllint disable-line
-    source: "https://downloads.apache.org/ranger/2.4.0/apache-ranger-2.4.0.tar.gz" # yamllint disable-line
-    source-type: "tar"
-    source-checksum: "sha512/5bc934416e7239e2b74843399389a69e8c129322ff0a67b2e7a541a4dd2171357b10925ea29861c40e7590a6523494d46343fdda38049d9a66e48d80eed11a4b" # yamllint disable-line
+    source: https://github.com/apache/ranger.git
+    # Commit from 08/04/24, after introduction of:
+    # prometheus compatible metrics (d745caa4c539aaeb239fac4931ae7df899667d9d).
+    # use.rangerGroups commit (84cb3c465c5c6dc71e369a9ccdc1594059b626ae).
+    source-commit: d745caa4c539aaeb239fac4931ae7df899667d9d
+    source-type: git
     build-packages:
       - build-essential
       - maven
@@ -139,11 +144,14 @@ parts:
       mkdir -p ${CRAFT_PART_INSTALL}/usr/lib/ranger
 
       # Unpack trino plugin file
-      tar xvfz target/ranger-2.4.0-trino-plugin.tar.gz \
+      tar xvfz target/ranger-3.0.0-SNAPSHOT-trino-plugin.tar.gz \
         --directory=${CRAFT_PART_INSTALL}/usr/lib/ranger/ \
         --strip-components=1
     stage:
       - usr/lib/ranger
+        # We will not stage the `ranger-trino-security.xml.
+        # We are staging this from local-files`
+      - "-usr/lib/ranger/install/conf.templates/enable/ranger-trino-security.xml" # yamllint disable-line
     permissions:
       - path: usr/lib/ranger
         owner: 584792
