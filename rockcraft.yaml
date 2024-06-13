@@ -149,6 +149,8 @@ parts:
         --strip-components=1
     stage:
       - usr/lib/ranger
+        # We will not stage the `ranger-trino-security.xml.
+        # We are staging this from local-files`
       - "-usr/lib/ranger/install/conf.templates/enable/ranger-trino-security.xml" # yamllint disable-line
     permissions:
       - path: usr/lib/ranger
