@@ -5,7 +5,7 @@
 name: charmed-trino-rock
 base: ubuntu@22.04
 version: 418-22.04-edge
-summary: Charmed TrinoROCK OCI
+summary: Charmed Trino rock OCI
 description: |
   Trino is an ANSI SQL compliant query engine,
   that works with BI tools such as R, Tableau,
