@@ -36,7 +36,7 @@ jobs:
           sudo snap install rockcraft --classic --edge
       - name: Cleanup previous mounts
         run: |
-          sudo umount /root/overlay/overlay || true
+          sudo umount -l /root/overlay/overlay || true
           sudo rm -rf /root/overlay/overlay || true
       - name: Build ROCK
         run: |
