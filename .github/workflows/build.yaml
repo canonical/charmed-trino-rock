@@ -34,6 +34,10 @@ jobs:
         run: |
           sudo snap install yq
           sudo snap install rockcraft --classic --edge
+      - name: Cleanup previous mounts
+        run: |
+          sudo umount /root/overlay/overlay || true
+          sudo rm -rf /root/overlay/overlay || true
       - name: Build ROCK
         run: |
           app_version=$(yq '.version' rockcraft.yaml)
