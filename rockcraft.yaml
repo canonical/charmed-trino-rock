@@ -128,10 +128,10 @@ parts:
     plugin: maven
     maven-parameters: ["-DskipTests=true", "-P ranger-trino-plugin,-linux -am", "-pl distro,plugin-trino,ranger-trino-plugin-shim,agents-installer,credentialbuilder"] # yamllint disable-line
     source: https://github.com/apache/ranger.git
-    # Commit from 08/04/24, after introduction of:
+    # Commit from 08/09/23, after introduction of:
     # prometheus compatible metrics (d745caa4c539aaeb239fac4931ae7df899667d9d).
     # use.rangerGroups commit (84cb3c465c5c6dc71e369a9ccdc1594059b626ae).
-    source-commit: d745caa4c539aaeb239fac4931ae7df899667d9d
+    source-commit: 84cb3c465c5c6dc71e369a9ccdc1594059b626ae
     source-type: git
     build-packages:
       - build-essential
@@ -208,3 +208,4 @@ parts:
     stage-packages:
       - openjdk-21-jdk-headless
       - less
+      - apache2-utils
