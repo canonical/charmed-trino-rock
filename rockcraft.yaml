@@ -123,8 +123,18 @@ parts:
         group: 584792
         mode: "755"
 
+  patches:
+    plugin: dump
+    source: ./patches
+    organize:
+      update-acl.patch: patches/update-acl.patch
+    stage:
+      - patches/update-acl.patch
+    prime:
+      - "-*"
+
   ranger-plugin:
-    after: [trino]
+    after: [trino, patches]
     plugin: maven
     maven-parameters: ["-DskipTests=true", "-P ranger-trino-plugin,-linux -am", "-pl distro,plugin-trino,ranger-trino-plugin-shim,agents-installer,credentialbuilder"] # yamllint disable-line
     source: https://github.com/apache/ranger.git
@@ -136,10 +146,12 @@ parts:
     build-packages:
       - build-essential
       - maven
+      - git
       - openjdk-11-jdk-headless
     build-environment:
       - JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
     override-build: |
+      git apply ${CRAFT_STAGE}/patches/*.patch
       craftctl default
       mkdir -p ${CRAFT_PART_INSTALL}/usr/lib/ranger
 

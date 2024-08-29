@@ -1,0 +1,157 @@
+diff --git a/agents-common/src/main/resources/service-defs/ranger-servicedef-trino.json b/../patched-ranger/agents-common/src/main/resources/service-defs/ranger-servicedef-trino.json
+index 88a57e1f0..3664a91da 100644
+--- a/agents-common/src/main/resources/service-defs/ranger-servicedef-trino.json
++++ b/agents-common/src/main/resources/service-defs/ranger-servicedef-trino.json
+@@ -209,57 +209,68 @@
+     {
+       "itemId": 1,
+       "name": "select",
+-      "label": "Select"
++      "label": "Select",
++      "category": "READ"
+     },
+     {
+       "itemId": 2,
+       "name": "insert",
+-      "label": "Insert"
++      "label": "Insert",
++      "category": "UPDATE"
+     },
+     {
+       "itemId": 3,
+       "name": "create",
+-      "label": "Create"
++      "label": "Create",
++      "category": "CREATE"
+     },
+     {
+       "itemId": 4,
+       "name": "drop",
+-      "label": "Drop"
++      "label": "Drop",
++      "category": "DELETE"
+     },
+     {
+       "itemId": 5,
+       "name": "delete",
+-      "label": "Delete"
++      "label": "Delete",
++      "category": "DELETE"
+     },
+     {
+       "itemId": 6,
+       "name": "use",
+-      "label": "Use"
++      "label": "Use",
++      "category": "READ"
+     },
+     {
+       "itemId": 7,
+       "name": "alter",
+-      "label": "Alter"
++      "label": "Alter",
++      "category": "CREATE"
+     },
+     {
+       "itemId": 8,
+       "name": "grant",
+-      "label": "Grant"
++      "label": "Grant",
++      "category": "MANAGE"
+     },
+     {
+       "itemId": 9,
+       "name": "revoke",
+-      "label": "Revoke"
++      "label": "Revoke",
++      "category": "MANAGE"
+     },
+     {
+       "itemId": 10,
+       "name": "show",
+-      "label": "Show"
++      "label": "Show",
++      "category": "READ"
+     },
+     {
+       "itemId": 11,
+       "name": "impersonate",
+-      "label": "Impersonate"
++      "label": "Impersonate",
++      "category": "READ"
+     },
+     {
+       "itemId": 12,
+@@ -277,13 +288,20 @@
+         "revoke",
+         "show",
+         "impersonate",
+-        "execute"
++        "execute",
++        "update"
+       ]
+     },
+     {
+       "itemId": 13,
+       "name": "execute",
+-      "label": "execute"
++      "label": "execute",
++      "category": "READ"
++    },{
++      "itemId": 14,
++      "name": "update",
++      "label": "update",
++      "category": "UPDATE"
+     }
+   ],
+   "configs": [
+diff --git a/plugin-trino/src/main/java/org/apache/ranger/authorization/trino/authorizer/RangerSystemAccessControl.java b/../patched-ranger/plugin-trino/src/main/java/org/apache/ranger/authorization/trino/authorizer/RangerSystemAccessControl.java
+index c440bf394..93aaa4a4b 100644
+--- a/plugin-trino/src/main/java/org/apache/ranger/authorization/trino/authorizer/RangerSystemAccessControl.java
++++ b/plugin-trino/src/main/java/org/apache/ranger/authorization/trino/authorizer/RangerSystemAccessControl.java
+@@ -633,6 +633,16 @@ public void checkCanSelectFromColumns(SystemSecurityContext context, CatalogSche
+     }
+   }
+ 
++  @Override
++  public void checkCanUpdateTableColumns(SystemSecurityContext securityContext, CatalogSchemaTableName table, Set<String> updatedColumnNames) {
++    for (RangerTrinoResource res : createResource(table, updatedColumnNames)) {
++      if (!hasPermission(res, securityContext, TrinoAccessType.UPDATE)) {
++        LOG.debug("RangerSystemAccessControl.checkCanUpdateTableColumns(" +table.getSchemaTableName().getTableName() + ") denied");
++        AccessDeniedException.denyUpdateTableColumns(table.getSchemaTableName().getTableName(), updatedColumnNames);
++      }
++    }
++  }
++
+   /**
+    * This is a NOOP, no filtering is applied
+    */
+@@ -910,5 +920,5 @@ public RangerTrinoAccessRequest(RangerTrinoResource resource,
+ }
+ 
+ enum TrinoAccessType {
+-  CREATE, DROP, SELECT, INSERT, DELETE, USE, ALTER, ALL, GRANT, REVOKE, SHOW, IMPERSONATE, EXECUTE;
++  CREATE, DROP, SELECT, INSERT, DELETE, USE, ALTER, ALL, GRANT, REVOKE, SHOW, IMPERSONATE, EXECUTE, UPDATE;
+ }
+diff --git a/ranger-trino-plugin-shim/src/main/java/org/apache/ranger/authorization/trino/authorizer/RangerSystemAccessControl.java b/../patched-ranger/ranger-trino-plugin-shim/src/main/java/org/apache/ranger/authorization/trino/authorizer/RangerSystemAccessControl.java
+index 10418dabb..e65c527f2 100644
+--- a/ranger-trino-plugin-shim/src/main/java/org/apache/ranger/authorization/trino/authorizer/RangerSystemAccessControl.java
++++ b/ranger-trino-plugin-shim/src/main/java/org/apache/ranger/authorization/trino/authorizer/RangerSystemAccessControl.java
+@@ -237,6 +237,17 @@ public void checkCanSelectFromColumns(SystemSecurityContext context, CatalogSche
+     }
+   }
+ 
++  @Override
++  public void checkCanUpdateTableColumns(SystemSecurityContext securityContext, CatalogSchemaTableName table, Set<String> updatedColumnNames)
++  {
++    try {
++      activatePluginClassLoader();
++      systemAccessControlImpl.checkCanUpdateTableColumns(securityContext, table, updatedColumnNames);
++    } finally {
++      deactivatePluginClassLoader();
++    }
++  }
++
+   @Override
+   public void checkCanInsertIntoTable(SystemSecurityContext context, CatalogSchemaTableName table) {
+     try {
