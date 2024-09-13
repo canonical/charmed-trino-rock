@@ -4,7 +4,7 @@
 
 name: charmed-trino-rock
 base: ubuntu@22.04
-version: 418-22.04-edge
+version: 436-22.04-edge
 summary: Charmed TrinoROCK OCI
 description: |
   Trino is an ANSI SQL compliant query engine,
@@ -20,6 +20,10 @@ platforms:
 # for more information about shared user.
 run_user: _daemon_
 
+environment:
+  JAVA_HOME: /usr/lib/jvm/java-21-openjdk-amd64
+  PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/lib/trino/bin # yamllint disable-line
+
 services:
   trino-server:
     override: replace
@@ -27,19 +31,32 @@ services:
     startup: disabled
     command: ./entrypoint.sh
 
-environment:
-  JAVA_HOME: /usr/lib/jvm/java-21-openjdk-amd64
-
 parts:
   trino:
-    plugin: dump
-    source: https://repo.maven.apache.org/maven2/io/trino/trino-server/418/trino-server-418.tar.gz # yamllint disable-line
-    source-type: tar
-    source-checksum: sha1/8d1e05127efa2d8a14a184c6b163242d07bd8ee3
+    plugin: nil
+    source: https://github.com/canonical/trino.git
+    source-tag: "436"
+    source-type: git
     build-packages:
       - build-essential
+      - curl
+      - git
+      - maven
+      - gcc
+      - openjdk-21-jdk-headless
+    build-environment:
+      - JAVA_HOME: /usr/lib/jvm/java-21-openjdk-amd64
     override-build: |
-      craftctl default
+      ./mvnw clean install -DskipTests -Dair.check.skip-all=true \
+        -pl '!:trino-server-rpm,!docs'
+
+      tar -xzf core/trino-server/target/trino-server-*.tar.gz \
+        --directory=${CRAFT_PART_INSTALL} \
+        --strip-components=1
+
+      cp client/trino-cli/target/trino-cli-*-executable.jar \
+        ${CRAFT_PART_INSTALL}/trino-cli
+
       mkdir -p \
         ${CRAFT_PART_INSTALL}/data/trino/var/run \
         ${CRAFT_PART_INSTALL}/data/trino/var/log \
@@ -54,6 +71,8 @@ parts:
       plugin/postgresql: usr/lib/trino/plugin/postgresql
       plugin/prometheus: usr/lib/trino/plugin/prometheus
       plugin/redis: usr/lib/trino/plugin/redis
+      plugin/ranger: usr/lib/trino/plugin/ranger
+      trino-cli: usr/lib/trino/bin/trino-cli
     stage:
       - data/trino
       - usr/lib/trino/bin
@@ -90,55 +109,19 @@ parts:
         group: 584792
         mode: "755"
 
-  local-files:
-    after: [trino, ranger-plugin]
-    plugin: dump
-    source: ./local-files
-    organize:
-      jvm.config: usr/lib/trino/etc/jvm.config
-      node.properties: usr/lib/trino/etc/node.properties
-      config.properties: usr/lib/trino/etc/config.properties
-      jmx-config.yaml: usr/lib/trino/etc/trino/jmx/config.yaml
-      trino-entrypoint.sh: entrypoint.sh
-      ranger-trino-security.xml: usr/lib/ranger/install/conf.templates/enable/ranger-trino-security.xml # yamllint disable-line
-    stage:
-      - usr/lib/ranger/install/conf.templates/enable/ranger-trino-security.xml
-      - usr/lib/trino/etc/jvm.config
-      - usr/lib/trino/etc/node.properties
-      - usr/lib/trino/etc/config.properties
-      - usr/lib/trino/etc/trino/jmx/config.yaml
-      - entrypoint.sh
-      - trino-cli.sh
-    permissions:
-      - path: usr/lib/trino/etc
-        owner: 584792
-        group: 584792
-        mode: "755"
-      - path: entrypoint.sh
-        owner: 584792
-        group: 584792
-        mode: "755"
-      - path: trino-cli.sh
-        owner: 584792
-        group: 584792
-        mode: "755"
-
   ranger-plugin:
     after: [trino]
     plugin: maven
-    maven-parameters: ["-DskipTests=true", "-P ranger-trino-plugin,-linux -am", "-pl distro,plugin-trino,ranger-trino-plugin-shim,agents-installer,credentialbuilder"] # yamllint disable-line
-    source: https://github.com/apache/ranger.git
-    # Commit from 08/09/23, after introduction of:
-    # prometheus compatible metrics (d745caa4c539aaeb239fac4931ae7df899667d9d).
-    # use.rangerGroups commit (84cb3c465c5c6dc71e369a9ccdc1594059b626ae).
-    source-commit: 84cb3c465c5c6dc71e369a9ccdc1594059b626ae
+    maven-parameters: ["-DskipTests=true", "-Drat.skip=true", "-P ranger-trino-plugin,-linux -am", "-pl distro,plugin-trino,ranger-trino-plugin-shim,agents-installer,credentialbuilder"] # yamllint disable-line
+    source: https://github.com/canonical/ranger.git
+    source-branch: ranger-2.4-0-trino-436
     source-type: git
     build-packages:
       - build-essential
       - maven
-      - openjdk-11-jdk-headless
+      - openjdk-21-jdk-headless
     build-environment:
-      - JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
+      - JAVA_HOME: /usr/lib/jvm/java-21-openjdk-amd64
     override-build: |
       craftctl default
       mkdir -p ${CRAFT_PART_INSTALL}/usr/lib/ranger
@@ -158,6 +141,34 @@ parts:
         group: 584792
         mode: "755"
 
+  local-files:
+    plugin: dump
+    after: [trino, ranger-plugin]
+    source: ./local-files
+    organize:
+      jvm.config: usr/lib/trino/etc/jvm.config
+      node.properties: usr/lib/trino/etc/node.properties
+      config.properties: usr/lib/trino/etc/config.properties
+      jmx-config.yaml: usr/lib/trino/etc/trino/jmx/config.yaml
+      trino-entrypoint.sh: entrypoint.sh
+      ranger-trino-security.xml: usr/lib/ranger/install/conf.templates/enable/ranger-trino-security.xml # yamllint disable-line
+    stage:
+      - usr/lib/ranger/install/conf.templates/enable/ranger-trino-security.xml
+      - usr/lib/trino/etc/jvm.config
+      - usr/lib/trino/etc/node.properties
+      - usr/lib/trino/etc/config.properties
+      - usr/lib/trino/etc/trino/jmx/config.yaml
+      - entrypoint.sh
+    permissions:
+      - path: usr/lib/trino/etc
+        owner: 584792
+        group: 584792
+        mode: "755"
+      - path: entrypoint.sh
+        owner: 584792
+        group: 584792
+        mode: "755"
+
   jmx-exporter:
     plugin: maven
     after: [trino]
@@ -165,6 +176,8 @@ parts:
     source: https://github.com/prometheus/jmx_exporter.git
     source-type: git
     source-tag: parent-0.19.0
+    build-environment:
+      - JAVA_HOME: /usr/lib/jvm/java-21-openjdk-amd64
     organize:
       jar/jmx_prometheus_javaagent-0.19.0.jar: usr/lib/trino/lib/jmx_prometheus_javaagent.jar # yamllint disable-line
     stage:
@@ -184,28 +197,13 @@ parts:
         group: 584792
         mode: "755"
 
-  trino-cli:
-    plugin: dump
-    source: https://repo.maven.apache.org/maven2/io/trino/trino-cli/418/trino-cli-418-executable.jar # yamllint disable-line
-    source-checksum: sha1/6cc447532d8722f78529257c13f8ab51e7481b15
-    source-type: file
-    organize:
-      trino-cli-418-executable.jar: trino
-    stage:
-      - trino
-    permissions:
-      - path: trino
-        owner: 584792
-        group: 584792
-        mode: "755"
-
   package-management:
     plugin: nil
     after: [trino, local-files, ranger-plugin]
     overlay-packages:
+      - openjdk-21-jdk-headless
       - ca-certificates
       - python-is-python3
     stage-packages:
-      - openjdk-21-jdk-headless
       - less
       - apache2-utils
