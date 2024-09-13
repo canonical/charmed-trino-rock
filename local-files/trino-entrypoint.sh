@@ -1,8 +1,7 @@
 #!/bin/bash
 
-export PATH="${JAVA_HOME}/bin:${PATH}"
-usr/lib/trino/bin/launcher stop
-usr/lib/trino/bin/launcher start
+launcher stop
+launcher start
 
 while [ ! -f /data/trino/var/log/server.log ]; do
     sleep 1
