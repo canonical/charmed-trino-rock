@@ -26,6 +26,12 @@ jobs:
     needs:
       - lint
     steps:
+      - name: Free disk space
+        uses: canonical/free-disk-space@main
+        with:
+          android: true
+          dotnet: true
+          haskell: true
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Setup LXD
