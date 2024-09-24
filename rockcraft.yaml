@@ -35,7 +35,7 @@ parts:
   trino:
     plugin: nil
     source: https://github.com/canonical/trino.git
-    source-tag: "436"
+    source-branch: "trino-436-oauth"
     source-type: git
     build-packages:
       - build-essential
