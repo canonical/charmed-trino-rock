@@ -33,6 +33,7 @@ services:
 
 parts:
   trino:
+    after: [patches]
     plugin: nil
     source: https://github.com/canonical/trino.git
     source-tag: "436"
@@ -47,6 +48,8 @@ parts:
     build-environment:
       - JAVA_HOME: /usr/lib/jvm/java-21-openjdk-amd64
     override-build: |
+      git apply ${CRAFT_STAGE}/patches/*.patch
+
       ./mvnw clean install -DskipTests -Dair.check.skip-all=true \
         -pl '!:trino-server-rpm,!docs'
 
@@ -140,6 +143,16 @@ parts:
         owner: 584792
         group: 584792
         mode: "755"
+
+  patches:
+    plugin: dump
+    source: ./
+    organize:
+      oauth.patch: patches/oauth.patch
+    stage:
+      - patches/oauth.patch
+    prime:
+      - "-*"
 
   local-files:
     plugin: dump
