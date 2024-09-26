@@ -64,6 +64,7 @@ parts:
     organize:
       bin: usr/lib/trino/bin
       lib: usr/lib/trino/lib
+      plugin/bigquery: usr/lib/trino/plugin/bigquery
       plugin/elasticsearch: usr/lib/trino/plugin/elasticsearch
       plugin/google-sheets: usr/lib/trino/plugin/google-sheets
       plugin/mysql: usr/lib/trino/plugin/mysql
