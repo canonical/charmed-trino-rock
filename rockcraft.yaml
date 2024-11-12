@@ -73,6 +73,7 @@ parts:
       plugin/prometheus: usr/lib/trino/plugin/prometheus
       plugin/redis: usr/lib/trino/plugin/redis
       plugin/ranger: usr/lib/trino/plugin/ranger
+      plugin/hive: usr/lib/trino/plugin/hive
       trino-cli: usr/lib/trino/bin/trino-cli
     stage:
       - data/trino
