@@ -53,8 +53,10 @@ parts:
       tar -xzf jdk-23.0.1.tar.gz
       cp -r jdk-23.0.1/* ${JAVA_HOME}
       cp -r jdk-23.0.1/* ${CRAFT_PART_INSTALL}${JAVA_HOME}
-      update-alternatives --install /usr/bin/java java ${JAVA_HOME}/bin/java 1
-      update-alternatives --install /usr/bin/javac javac ${JAVA_HOME}/bin/javac 1
+      update-alternatives --install \
+        /usr/bin/java java ${JAVA_HOME}/bin/java 1
+      update-alternatives --install \
+        /usr/bin/javac javac ${JAVA_HOME}/bin/javac 1
       update-alternatives --set java ${JAVA_HOME}/bin/java
       update-alternatives --set javac ${JAVA_HOME}/bin/javac
 
