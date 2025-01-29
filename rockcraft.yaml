@@ -87,6 +87,7 @@ parts:
       plugin/redis: usr/lib/trino/plugin/redis
       plugin/apache-ranger: usr/lib/trino/plugin/apache-ranger
       plugin/hive: usr/lib/trino/plugin/hive
+      plugin/geospatial: usr/lib/trino/plugin/geospatial
       trino-cli: usr/lib/trino/bin/trino-cli
     stage:
       - data/trino
