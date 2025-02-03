@@ -44,8 +44,9 @@ parts:
       - JAVA_HOME: /usr/lib/jvm/java-23-openjdk-amd64
       - JAVA_URL: https://download.java.net/java/GA/jdk23.0.1/c28985cbf10d4e648e4004050f8781aa/11/GPL/openjdk-23.0.1_linux-x64_bin.tar.gz # yamllint disable-line
     override-build: |
-      # TODO: the following block needs to be removed when
-      # openjdk-23-jdk-headless becomes available on 25.04
+      # TODO: the following block can be removed when the ubuntu base
+      # used for the rock supports the "openjdk-xx-jdk-headless"
+      # corrseponding to the java version used in Trino
       curl ${JAVA_URL} --output jdk-23.0.1.tar.gz
       mkdir -p ${JAVA_HOME}
       mkdir -p ${CRAFT_PART_INSTALL}${JAVA_HOME}
@@ -163,8 +164,8 @@ parts:
         mode: "755"
 
   # This is a workaround of an issue with ranger groups in trino 468
-  # the author is aware of the problem and is supposed to fix it in the
-  # next release. At that point this part can be deleted.
+  # The issue is tracked here:
+  # https://github.com/trinodb/trino/issues/24887
   trino-patch:
     plugin: nil
     after: [local-files]
@@ -188,8 +189,6 @@ parts:
     source: https://github.com/prometheus/jmx_exporter.git
     source-type: git
     source-tag: parent-0.19.0
-    # build-environment:
-    #   - JAVA_HOME: /usr/lib/jvm/java-21-openjdk-amd64
     organize:
       jar/jmx_prometheus_javaagent-0.19.0.jar: usr/lib/trino/lib/jmx_prometheus_javaagent.jar # yamllint disable-line
     stage:
