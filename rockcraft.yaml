@@ -46,7 +46,7 @@ parts:
     override-build: |
       # TODO: the following block can be removed when the ubuntu base
       # used for the rock supports the "openjdk-xx-jdk-headless"
-      # corrseponding to the java version used in Trino
+      # corresponding to the java version used in Trino
       curl ${JAVA_URL} --output jdk-23.0.1.tar.gz
       mkdir -p ${JAVA_HOME}
       mkdir -p ${CRAFT_PART_INSTALL}${JAVA_HOME}
