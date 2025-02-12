@@ -2,8 +2,8 @@
 REPO_FOLDER = charmed-trino-rock
 REPO = https://github.com/canonical/$(REPO_FOLDER).git
 ROCK_DEV = rock-dev
-ROCK_VERSION = 418
-UBUNTU_VER = 22.04
+ROCK_VERSION = 468
+UBUNTU_VER = 24.04
 DOCKER_NAME = trino-rock
 DOCKER_PORT = 8080
 DOCKER_ARGS = start trino-server
