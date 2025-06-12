@@ -1,7 +1,7 @@
 # Charmed Trino ROCK
 
 > ⚠️ **This project has moved!**  
-> Now it is part of the `trino-k8s-operator` repository that can be found [here](https://github.com/canonical/trino-k8s-operator).
+> It is now part of the `trino-k8s-operator` repository that can be found [here](https://github.com/canonical/trino-k8s-operator).
 
 This repository contains the packaging metadata for creating a Charmed Trino ROCK. This ROCK image is based on the upstream [Trino](https://repo.maven.apache.org/maven2/io/trino/trino-server) image.
 
